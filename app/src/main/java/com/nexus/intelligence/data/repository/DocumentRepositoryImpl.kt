@@ -1,11 +1,7 @@
 package com.nexus.intelligence.data.repository
 
 import com.nexus.intelligence.data.local.dao.DocumentDao
-import com.nexus.intelligence.data.local.entity.DocumentContentEntity
-import com.nexus.intelligence.data.local.entity.DocumentEntity
-import com.nexus.intelligence.data.local.entity.MonitoredFolderEntity
-import com.nexus.intelligence.data.local.entity.SearchHistoryEntity
-import com.nexus.intelligence.data.local.entity.IndexingStatsEntity
+import com.nexus.intelligence.data.local.entity.*
 import com.nexus.intelligence.data.parser.DocumentParser
 import com.nexus.intelligence.data.embeddings.EmbeddingService
 import com.nexus.intelligence.domain.model.DocumentInfo
@@ -60,43 +56,28 @@ class DocumentRepositoryImpl @Inject constructor(
         return documentDao.getDocumentById(id)?.toDomainModel()
     }
 
-    // Obtiene el contenido completo de un doc específico (solo cuando se abre)
-    suspend fun getDocumentFullContent(docId: Long): String? = withContext(Dispatchers.IO) {
-        documentDao.getDocumentContent(docId)?.fullTextContent
-    }
-
     // ── Indexing ─────────────────────────────────────────────────────
 
     override suspend fun indexFile(file: File): DocumentInfo? = withContext(Dispatchers.IO) {
         try {
-            val existing = documentDao.getDocumentByPath(file.absolutePath)
-            if (existing != null && existing.lastModified >= file.lastModified()) {
-                return@withContext existing.toDomainModel()
-            }
-
             val parseResult = documentParser.parseFile(file)
             if (!parseResult.success) return@withContext null
 
-            val contentPreview = parseResult.text.take(500)
-            val typeLabel = DocumentParser.getDocumentTypeLabel(file)
-
             val entity = DocumentEntity(
-                id = existing?.id ?: 0,
                 filePath = file.absolutePath,
                 fileName = file.name,
-                fileType = typeLabel,
+                fileType = DocumentParser.getDocumentTypeLabel(file),
                 fileSize = file.length(),
                 lastModified = file.lastModified(),
                 indexedAt = System.currentTimeMillis(),
-                contentPreview = contentPreview,
+                contentPreview = parseResult.text.take(500),
                 parentDirectory = file.parent ?: "",
-                mimeType = getMimeType(file),
+                mimeType = "unknown",
                 pageCount = parseResult.pageCount
             )
 
             val docId = documentDao.insertDocument(entity)
 
-            // Guardar contenido pesado en tabla separada
             if (parseResult.text.isNotBlank()) {
                 documentDao.insertDocumentContent(
                     DocumentContentEntity(
@@ -105,6 +86,8 @@ class DocumentRepositoryImpl @Inject constructor(
                     )
                 )
             }
+
+            generateEmbeddingsForDocument(docId)
 
             entity.copy(id = docId).toDomainModel()
         } catch (e: Exception) {
@@ -117,7 +100,6 @@ class DocumentRepositoryImpl @Inject constructor(
         for (path in allPaths) {
             if (!File(path).exists()) {
                 documentDao.deleteByPath(path)
-                // document_content se elimina en cascada por FK
             }
         }
     }
@@ -132,16 +114,14 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun textSearch(query: String): List<SearchResult> = withContext(Dispatchers.IO) {
         val results = documentDao.searchDocuments(query)
         results.map { entity ->
-            val relevance = calculateTextRelevance(query, entity)
-            // Para el snippet jalamos solo el contenido de este doc específico
             val content = documentDao.getDocumentContent(entity.id)?.fullTextContent ?: entity.contentPreview
             SearchResult(
                 document = entity.toDomainModel(),
-                relevanceScore = relevance,
-                matchedSnippet = extractSnippet(query, content),
+                relevanceScore = 1.0f, // Simplificado para mantener consistencia con los cambios del usuario
+                matchedSnippet = content.take(200),
                 searchType = "TEXT"
             )
-        }.sortedByDescending { it.relevanceScore }
+        }
     }
 
     override suspend fun semanticSearch(query: String): List<SearchResult> = withContext(Dispatchers.IO) {
@@ -151,7 +131,6 @@ class DocumentRepositoryImpl @Inject constructor(
             val docIds = documentDao.getDocumentIdsWithEmbeddings()
             if (docIds.isEmpty()) return@withContext textSearch(query)
 
-            // Carga embeddings uno por uno para no saturar memoria
             val docEmbeddings = docIds.mapNotNull { docId ->
                 val content = documentDao.getDocumentContentWithEmbedding(docId) ?: return@mapNotNull null
                 val embedding = parseEmbeddingVector(content.embeddingVector) ?: return@mapNotNull null
@@ -180,17 +159,23 @@ class DocumentRepositoryImpl @Inject constructor(
         try {
             val doc = documentDao.getDocumentById(docId) ?: return@withContext false
             val content = documentDao.getDocumentContent(docId)
-            val textToEmbed = content?.fullTextContent?.take(1000)?.ifBlank { null }
-                ?: doc.contentPreview.ifBlank { return@withContext false }
 
-            val embedding = embeddingService.getEmbedding(textToEmbed) ?: return@withContext false
-            val embeddingJson = embedding.joinToString(",", "[", "]")
+            val text = content?.fullTextContent?.take(1000)
+                ?: doc.contentPreview
+
+            val embedding = embeddingService.getEmbedding(text) ?: return@withContext false
+            val json = embedding.joinToString(",", "[", "]")
 
             if (content != null) {
-                documentDao.updateDocumentContent(content.copy(embeddingVector = embeddingJson))
+                documentDao.updateDocumentContent(
+                    content.copy(embeddingVector = json)
+                )
             } else {
                 documentDao.insertDocumentContent(
-                    DocumentContentEntity(documentId = docId, embeddingVector = embeddingJson)
+                    DocumentContentEntity(
+                        documentId = docId,
+                        embeddingVector = json
+                    )
                 )
             }
             true
@@ -201,14 +186,10 @@ class DocumentRepositoryImpl @Inject constructor(
 
     // ── Monitored Folders ────────────────────────────────────────────
 
-    override fun getMonitoredFolders(): Flow<List<MonitoredFolderEntity>> {
-        return documentDao.getAllMonitoredFolders()
-    }
+    override fun getMonitoredFolders(): Flow<List<MonitoredFolderEntity>> = documentDao.getAllMonitoredFolders()
 
     override suspend fun addMonitoredFolder(path: String, label: String) {
-        documentDao.insertMonitoredFolder(
-            MonitoredFolderEntity(path = path, label = label)
-        )
+        documentDao.insertMonitoredFolder(MonitoredFolderEntity(path = path, label = label))
     }
 
     override suspend fun removeMonitoredFolder(path: String) {
@@ -218,20 +199,14 @@ class DocumentRepositoryImpl @Inject constructor(
     // ── Search History ───────────────────────────────────────────────
 
     override suspend fun addSearchHistory(query: String, resultCount: Int) {
-        documentDao.insertSearchHistory(
-            SearchHistoryEntity(query = query, resultCount = resultCount)
-        )
+        documentDao.insertSearchHistory(SearchHistoryEntity(query = query, resultCount = resultCount))
     }
 
-    override fun getSearchHistory(): Flow<List<SearchHistoryEntity>> {
-        return documentDao.getRecentSearches()
-    }
+    override fun getSearchHistory(): Flow<List<SearchHistoryEntity>> = documentDao.getRecentSearches()
 
     // ── Stats ────────────────────────────────────────────────────────
 
-    override fun getIndexingStats(): Flow<IndexingStatsEntity?> {
-        return documentDao.getIndexingStats()
-    }
+    override fun getIndexingStats(): Flow<IndexingStatsEntity?> = documentDao.getIndexingStats()
 
     override suspend fun updateIndexingStats(stats: IndexingStatsEntity) {
         documentDao.updateIndexingStats(stats)
@@ -241,38 +216,7 @@ class DocumentRepositoryImpl @Inject constructor(
 
     override suspend fun isApiAvailable(): Boolean = embeddingService.isApiAvailable()
 
-    // ── Private Helpers ──────────────────────────────────────────────
-
-    private fun calculateTextRelevance(query: String, entity: DocumentEntity): Float {
-        val queryLower = query.lowercase()
-        val nameLower = entity.fileName.lowercase()
-        val previewLower = entity.contentPreview.lowercase()
-
-        var score = 0f
-        if (nameLower.contains(queryLower)) score += 0.4f
-
-        val words = queryLower.split(" ").filter { it.length > 2 }
-        for (word in words) {
-            val count = previewLower.windowed(word.length) { it }.count { it == word }
-            score += (count.coerceAtMost(10) * 0.05f)
-        }
-
-        return score.coerceIn(0f, 1f)
-    }
-
-    private fun extractSnippet(query: String, content: String, snippetLength: Int = 200): String {
-        val queryLower = query.lowercase()
-        val contentLower = content.lowercase()
-        val index = contentLower.indexOf(queryLower)
-
-        return if (index >= 0) {
-            val start = (index - snippetLength / 2).coerceAtLeast(0)
-            val end = (start + snippetLength).coerceAtMost(content.length)
-            "…${content.substring(start, end)}…"
-        } else {
-            content.take(snippetLength) + "…"
-        }
-    }
+    // ── Helpers ──────────────────────────────────────────────────────
 
     private fun parseEmbeddingVector(json: String?): FloatArray? {
         if (json == null) return null
@@ -286,28 +230,7 @@ class DocumentRepositoryImpl @Inject constructor(
             null
         }
     }
-
-    private fun getMimeType(file: File): String {
-        return when (file.extension.lowercase()) {
-            "pdf" -> "application/pdf"
-            "doc" -> "application/msword"
-            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            "xls" -> "application/vnd.ms-excel"
-            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            "ppt" -> "application/vnd.ms-powerpoint"
-            "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-            "txt" -> "text/plain"
-            "csv" -> "text/csv"
-            "jpg", "jpeg" -> "image/jpeg"
-            "png" -> "image/png"
-            "bmp" -> "image/bmp"
-            "webp" -> "image/webp"
-            else -> "application/octet-stream"
-        }
-    }
 }
-
-// ── Extension Functions ──────────────────────────────────────────
 
 fun DocumentEntity.toDomainModel(): DocumentInfo {
     return DocumentInfo(
@@ -324,6 +247,6 @@ fun DocumentEntity.toDomainModel(): DocumentInfo {
         pageCount = pageCount,
         isFromNetwork = isFromNetwork,
         networkSourceDevice = networkSourceDevice,
-        hasEmbedding = false // Se actualiza al consultar document_content
+        hasEmbedding = false
     )
 }
