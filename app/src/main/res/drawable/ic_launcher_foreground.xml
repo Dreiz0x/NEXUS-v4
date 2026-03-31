@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background hexagon -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M54,10 L94,30 L94,78 L54,98 L14,78 L14,30 Z" />
+
+    <!-- Outer ring -->
+    <path
+        android:strokeColor="#00FFFF"
+        android:strokeWidth="1.5"
+        android:fillColor="#00000000"
+        android:pathData="M54,20 L84,35 L84,73 L54,88 L24,73 L24,35 Z" />
+
+    <!-- Inner diamond -->
+    <path
+        android:strokeColor="#00FFFF"
+        android:strokeWidth="1"
+        android:fillColor="#0D00FFFF"
+        android:pathData="M54,35 L69,54 L54,73 L39,54 Z" />
+
+    <!-- Center dot -->
+    <path
+        android:fillColor="#00FFFF"
+        android:pathData="M54,51 A3,3 0 1,1 54,57 A3,3 0 1,1 54,51 Z" />
+
+    <!-- N letter stylized -->
+    <path
+        android:strokeColor="#00FFFF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000"
+        android:pathData="M44,65 L44,43 L64,65 L64,43" />
+
+    <!-- Scan lines -->
+    <path
+        android:strokeColor="#00FFFF"
+        android:strokeWidth="0.3"
+        android:fillColor="#00000000"
+        android:pathData="M24,45 L84,45" />
+    <path
+        android:strokeColor="#00FFFF"
+        android:strokeWidth="0.3"
+        android:fillColor="#00000000"
+        android:pathData="M24,63 L84,63" />
+
+</vector>

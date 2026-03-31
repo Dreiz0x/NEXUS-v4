@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nexus_black">#FF000000</color>
+    <color name="nexus_dark">#FF0A0A0F</color>
+    <color name="nexus_cyan">#FF00FFFF</color>
+    <color name="nexus_green">#FF39FF14</color>
+    <color name="nexus_magenta">#FFFF00FF</color>
+    <color name="nexus_amber">#FFFFBF00</color>
+    <color name="nexus_red">#FFFF0040</color>
+    <color name="nexus_white">#FFE0E0E0</color>
+    <color name="nexus_grid">#1A00FFFF</color>
+</resources>
