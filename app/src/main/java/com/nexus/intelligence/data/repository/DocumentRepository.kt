@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import java.io.File
 
 interface DocumentRepository {
-    // Document CRUD
+    // CRUD de Documentos
     fun getAllDocuments(): Flow<List<DocumentInfo>>
     fun getRecentDocuments(limit: Int): Flow<List<DocumentInfo>>
     fun getDocumentsByType(type: String): Flow<List<DocumentInfo>>
@@ -18,29 +18,35 @@ interface DocumentRepository {
     fun getAllDirectories(): Flow<List<String>>
     suspend fun getDocumentById(id: Long): DocumentInfo?
 
-    // Indexing
+    // Indexación y Archivos
     suspend fun indexFile(file: File): DocumentInfo?
     suspend fun removeDeletedFiles()
     suspend fun clearIndex()
+    suspend fun deleteByPath(path: String)
+    suspend fun getAllFilePaths(): List<String>
 
-    // Search
+    // Búsqueda
     suspend fun textSearch(query: String): List<SearchResult>
     suspend fun semanticSearch(query: String): List<SearchResult>
     suspend fun generateEmbeddingsForDocument(docId: Long): Boolean
 
-    // Monitored Folders
+    // Carpetas Monitoreadas
     fun getMonitoredFolders(): Flow<List<MonitoredFolderEntity>>
-    suspend fun addMonitoredFolder(path: String, label: String)
+    suspend fun addMonitoredFolder(id: String, path: String, label: String)
     suspend fun removeMonitoredFolder(path: String)
 
-    // Search History
+    // Historial de Búsqueda
     suspend fun addSearchHistory(query: String, resultCount: Int)
     fun getSearchHistory(): Flow<List<SearchHistoryEntity>>
 
-    // Stats
+    // Estadísticas y Estado de Escaneo (Lo que pide tu ViewModel)
     fun getIndexingStats(): Flow<IndexingStatsEntity?>
     suspend fun updateIndexingStats(stats: IndexingStatsEntity)
+    fun startScan()
+    fun stop()
+    val isCurrentlyScanning: Flow<Boolean>
+    val lastScanTimestamp: Flow<Long>
 
-    // API Status
+    // Utilidades
     suspend fun isApiAvailable(): Boolean
 }
