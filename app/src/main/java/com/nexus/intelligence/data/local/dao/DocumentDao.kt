@@ -1,7 +1,8 @@
 package com.nexus.intelligence.data.local.dao
 
 import androidx.room.*
-import com.nexus.intelligence.data.local.entity.*
+import com.nexus.intelligence.data.local.entity.DocumentEntity
+import com.nexus.intelligence.data.local.entity.DocumentContentEntity
 
 @Dao
 interface DocumentDao {
