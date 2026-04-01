@@ -1,34 +1,48 @@
-name: Android CI
+name: NEXUS Android Build
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - uses: android-actions/setup-android@v3
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
+      # 🔥 Instalar Gradle limpio
+      - name: Install Gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-8.5-bin.zip
+          unzip gradle-8.5-bin.zip
+          echo "$PWD/gradle-8.5/bin" >> $GITHUB_PATH
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: nexus-v4-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+      # 🔥 Regenerar wrapper desde cero (mata corrupción)
+      - name: Regenerate Wrapper
+        run: |
+          rm -rf gradle/wrapper
+          gradle wrapper
+
+      # 🔥 Permisos
+      - name: Grant permission
+        run: chmod +x gradlew
+
+      # 🔥 Build real
+      - name: Build APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
