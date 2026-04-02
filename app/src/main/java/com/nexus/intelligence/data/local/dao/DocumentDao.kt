@@ -1,7 +1,7 @@
 package com.nexus.intelligence.data.local.dao
 
 import androidx.room.*
-import com.nexus.intelligence.data.local.entity.*
+import com.nexus.intelligence.data.local.entities.*
 import kotlinx.coroutines.flow.Flow
 
 @Dao
