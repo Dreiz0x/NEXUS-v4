@@ -1,9 +1,8 @@
 package com.nexus.intelligence.data.local.entity
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
 @Entity(
     tableName = "documents",
@@ -28,22 +27,4 @@ data class DocumentEntity(
     val pageCount: Int = 0,
     val isFromNetwork: Int = 0,
     val networkSourceDevice: String? = null
-)
-
-@Entity(
-    tableName = "document_contents", // USAMOS PLURAL PARA COINCIDIR CON TU DAO
-    foreignKeys = [
-        ForeignKey(
-            entity = DocumentEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["documentId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["documentId"])]
-)
-data class DocumentContentEntity(
-    @PrimaryKey val documentId: Long, // El ID del doc es la PK, así no necesitas un 'id' extra
-    val fullTextContent: String = "",
-    val embeddingVector: String? = null
 )
