@@ -2,32 +2,16 @@ package com.nexus.intelligence.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Index
 
-@Entity(tableName = "documents")
-data class DocumentEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val filePath: String,
-    val fileName: String,
-    val fileType: String,
-    val fileSize: Long,
-    val lastModified: Long,
-    val indexedAt: Long = System.currentTimeMillis(),
-    val contentPreview: String = "",
-    val parentDirectory: String = "",
-    val mimeType: String = "application/pdf",
-    val pageCount: Int = 0,
-    val hasEmbedding: Boolean = false
+@Entity(
+    tableName = "monitored_folders",
+    indices = [Index(value = ["path"], unique = true)]
 )
-
-/**
- * Tabla separada para el contenido completo de los documentos.
- * Esto evita que las consultas de listas sean lentas al no cargar el texto pesado.
- */
-@Entity(tableName = "document_contents")
-data class DocumentContentEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val documentId: Long, // Relación con el ID de DocumentEntity
-    val fullTextContent: String
+data class MonitoredFolderEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val path: String,
+    val label: String = "",
+    val isEnabled: Boolean = true,
+    val addedAt: Long = System.currentTimeMillis()
 )
