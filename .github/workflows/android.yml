@@ -1,6 +1,6 @@
 name: NEXUS Android Build
 
-on:
+on: 
   push:
     branches: [ main, master ]
   pull_request:
