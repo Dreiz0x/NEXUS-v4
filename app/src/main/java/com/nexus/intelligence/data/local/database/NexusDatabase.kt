@@ -2,7 +2,6 @@ package com.nexus.intelligence.data.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -27,7 +26,7 @@ abstract class NexusDatabase : RoomDatabase() {
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // 1. Crear tabla document_contents (Plural para coincidir con Entities)
+                // 1. Crear tabla document_contents
                 database.execSQL("""
                     CREATE TABLE IF NOT EXISTS `document_contents` (
                         `documentId` INTEGER NOT NULL,
@@ -37,52 +36,19 @@ abstract class NexusDatabase : RoomDatabase() {
                         FOREIGN KEY(`documentId`) REFERENCES `documents`(`id`) ON DELETE CASCADE
                     )
                 """)
-                
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_document_contents_documentId` ON `document_contents` (`documentId`)")
 
-                // 2. Recrear tabla documents para quitar columnas pesadas y añadir de red
+                // 2. Mover datos pesados
                 database.execSQL("""
-                    CREATE TABLE `documents_new` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `filePath` TEXT NOT NULL,
-                        `fileName` TEXT NOT NULL,
-                        `fileType` TEXT NOT NULL,
-                        `fileSize` INTEGER NOT NULL,
-                        `lastModified` INTEGER NOT NULL,
-                        `indexedAt` INTEGER NOT NULL,
-                        `contentPreview` TEXT NOT NULL DEFAULT '',
-                        `parentDirectory` TEXT NOT NULL DEFAULT '',
-                        `mimeType` TEXT NOT NULL DEFAULT '',
-                        `pageCount` INTEGER NOT NULL DEFAULT 0,
-                        `isFromNetwork` INTEGER NOT NULL DEFAULT 0,
-                        `networkSourceDevice` TEXT
-                    )
+                    INSERT INTO document_contents (documentId, fullTextContent, embeddingVector)
+                    SELECT id, fullTextContent, embeddingVector FROM documents
                 """)
 
-                database.execSQL("""
-                    INSERT INTO documents_new (id, filePath, fileName, fileType, fileSize, lastModified, indexedAt, contentPreview, parentDirectory, mimeType, pageCount)
-                    SELECT id, filePath, fileName, fileType, fileSize, lastModified, indexedAt, contentPreview, parentDirectory, mimeType, pageCount FROM documents
-                """)
-
-                database.execSQL("DROP TABLE documents")
-                database.execSQL("ALTER TABLE documents_new RENAME TO documents")
-                
-                // Recrear índices
-                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_documents_filePath` ON `documents` (`filePath`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_documents_fileType` ON `documents` (`fileType`)")
+                // 3. (Opcional) solo si tu SDK ≥ 31 y SQLite ≥ 3.35
+                // database.execSQL("ALTER TABLE documents DROP COLUMN fullTextContent")
+                // database.execSQL("ALTER TABLE documents DROP COLUMN embeddingVector")
+                // Si no, solo déjalas vacías. No tocas la estructura de `documents`.
             }
         }
-    }
-}
-
-class Converters {
-    @TypeConverter
-    fun fromFloatArray(value: String?): FloatArray? {
-        return value?.removeSurrounding("[", "]")?.split(",")?.filter { it.isNotBlank() }?.map { it.trim().toFloat() }?.toFloatArray()
-    }
-
-    @TypeConverter
-    fun toFloatArray(array: FloatArray?): String? {
-        return array?.joinToString(",", "[", "]")
     }
 }
