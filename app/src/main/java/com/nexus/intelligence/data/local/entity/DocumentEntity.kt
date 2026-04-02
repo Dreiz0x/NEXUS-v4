@@ -15,8 +15,7 @@ import androidx.room.PrimaryKey
     ]
 )
 data class DocumentEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val filePath: String,
     val fileName: String,
     val fileType: String,
@@ -27,12 +26,12 @@ data class DocumentEntity(
     val parentDirectory: String = "",
     val mimeType: String = "",
     val pageCount: Int = 0,
-    val isFromNetwork: Int = 0, // Agregado para coincidir con la migración
-    val networkSourceDevice: String? = null // Agregado para coincidir con la migración
+    val isFromNetwork: Int = 0,
+    val networkSourceDevice: String? = null
 )
 
 @Entity(
-    tableName = "document_contents", // SIEMPRE PLURAL
+    tableName = "document_contents", // USAMOS PLURAL PARA COINCIDIR CON TU DAO
     foreignKeys = [
         ForeignKey(
             entity = DocumentEntity::class,
@@ -40,11 +39,11 @@ data class DocumentEntity(
             childColumns = ["documentId"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index(value = ["documentId"])]
 )
 data class DocumentContentEntity(
-    @PrimaryKey
-    val documentId: Long, // Usamos el ID del documento como PK para evitar confusiones
+    @PrimaryKey val documentId: Long, // El ID del doc es la PK, así no necesitas un 'id' extra
     val fullTextContent: String = "",
     val embeddingVector: String? = null
 )
