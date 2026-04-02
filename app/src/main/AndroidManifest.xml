@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Permisos Críticos para NEXUS -->
+    <!-- Permisos CrÃ­ticos para NEXUS -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage" />
@@ -45,7 +45,7 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Servicio de Indexación en Segundo Plano -->
+        <!-- Servicio de IndexaciÃ³n en Segundo Plano -->
         <service
             android:name=".service.indexing.IndexingService"
             android:enabled="true"
@@ -54,4 +54,4 @@
 
     </application>
 
-</manifest>
+</manifest> 
