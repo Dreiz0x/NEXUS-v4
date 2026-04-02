@@ -18,7 +18,10 @@ interface DocumentDao {
     @Query("SELECT * FROM documents WHERE id = :id")
     suspend fun getDocumentById(id: Long): DocumentEntity?
 
-    // Contenido (Usando la tabla correcta: document_contents)
+    @Query("SELECT * FROM documents WHERE filePath = :path LIMIT 1")
+    suspend fun getDocumentByPath(path: String): DocumentEntity?
+
+    // Gestión de Contenido Pesado
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDocumentContent(content: DocumentContentEntity)
 
@@ -28,7 +31,11 @@ interface DocumentDao {
     @Query("DELETE FROM document_contents")
     suspend fun deleteAllDocumentContent()
 
-    // Stats y otros
+    // Búsqueda simple
+    @Query("SELECT * FROM documents WHERE fileName LIKE '%' || :query || '%' OR contentPreview LIKE '%' || :query || '%'")
+    suspend fun searchDocuments(query: String): List<DocumentEntity>
+
+    // Stats, Folder y History
     @Query("SELECT * FROM indexing_stats WHERE id = 'default' LIMIT 1")
     fun getIndexingStats(): Flow<IndexingStatsEntity?>
 
