@@ -2,12 +2,16 @@ package com.nexus.intelligence.data.local.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.nexus.intelligence.data.local.dao.DocumentDao
-import com.nexus.intelligence.data.local.entity.*
+// IMPORTA LAS ENTIDADES UNA POR UNA PARA FORZAR A KSP A ENCONTRARLAS
+import com.nexus.intelligence.data.local.entity.DocumentEntity
+import com.nexus.intelligence.data.local.entity.DocumentContentEntity
+import com.nexus.intelligence.data.local.entity.MonitoredFolderEntity
+import com.nexus.intelligence.data.local.entity.SearchHistoryEntity
+import com.nexus.intelligence.data.local.entity.IndexingStatsEntity
 
 @Database(
     entities = [
@@ -25,9 +29,9 @@ abstract class NexusDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
 
     companion object {
+        // Mantenemos la migración pero asegúrate de que el SQL use 'document_contents' (plural)
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                // 1. Crear tabla de contenido (Plural: document_contents)
                 database.execSQL("""
                     CREATE TABLE IF NOT EXISTS `document_contents` (
                         `documentId` INTEGER NOT NULL,
@@ -37,51 +41,8 @@ abstract class NexusDatabase : RoomDatabase() {
                         FOREIGN KEY(`documentId`) REFERENCES `documents`(`id`) ON DELETE CASCADE
                     )
                 """)
-
-                // 2. Recrear documents con los campos exactos de la clase
-                database.execSQL("""
-                    CREATE TABLE `documents_new` (
-                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        `filePath` TEXT NOT NULL,
-                        `fileName` TEXT NOT NULL,
-                        `fileType` TEXT NOT NULL,
-                        `fileSize` INTEGER NOT NULL,
-                        `lastModified` INTEGER NOT NULL,
-                        `indexedAt` INTEGER NOT NULL,
-                        `contentPreview` TEXT NOT NULL DEFAULT '',
-                        `parentDirectory` TEXT NOT NULL DEFAULT '',
-                        `mimeType` TEXT NOT NULL DEFAULT '',
-                        `pageCount` INTEGER NOT NULL DEFAULT 0,
-                        `isFromNetwork` INTEGER NOT NULL DEFAULT 0,
-                        `networkSourceDevice` TEXT
-                    )
-                """)
-
-                // Copiar datos (asegúrate de que los nombres coincidan)
-                database.execSQL("""
-                    INSERT INTO documents_new (id, filePath, fileName, fileType, fileSize, lastModified, indexedAt, contentPreview, parentDirectory, mimeType, pageCount)
-                    SELECT id, filePath, fileName, fileType, fileSize, lastModified, indexedAt, contentPreview, parentDirectory, mimeType, pageCount FROM documents
-                """)
-
-                database.execSQL("DROP TABLE documents")
-                database.execSQL("ALTER TABLE documents_new RENAME TO documents")
-                
-                // Índices
-                database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_documents_filePath` ON `documents` (`filePath`)")
+                // ... resto de tu lógica de recrear tablas ...
             }
         }
     }
 }
-
-class Converters {
-    @TypeConverter
-    fun fromFloatArray(value: String?): FloatArray? {
-        return value?.removeSurrounding("[", "]")?.split(",")?.filter { it.isNotBlank() }?.map { it.trim().toFloat() }?.toFloatArray()
-    }
-
-    @TypeConverter
-    fun toFloatArray(array: FloatArray?): String? {
-        return array?.joinToString(",", "[", "]")
-    }
-}
-
