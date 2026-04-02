@@ -16,7 +16,7 @@ import com.nexus.intelligence.data.local.entity.*
         SearchHistoryEntity::class,
         IndexingStatsEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
