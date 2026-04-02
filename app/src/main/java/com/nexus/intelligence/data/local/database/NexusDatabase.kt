@@ -6,7 +6,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.nexus.intelligence.data.local.dao.DocumentDao
-import com.nexus.intelligence.data.local.entities.*
+import com.nexus.intelligence.data.local.entity.*
 
 @Database(
     entities = [
