@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "search_history")
 data class SearchHistoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val query: String,
+    val resultCount: Int = 0, // Campo faltante que causaba error
     val timestamp: Long = System.currentTimeMillis()
 )
