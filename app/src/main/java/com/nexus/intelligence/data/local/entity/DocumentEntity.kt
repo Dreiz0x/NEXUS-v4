@@ -5,7 +5,15 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "documents")
+@Entity(
+    tableName = "documents",
+    indices = [
+        Index(value = ["filePath"], unique = true),
+        Index(value = ["fileType"]),
+        Index(value = ["lastModified"]),
+        Index(value = ["indexedAt"])
+    ]
+)
 data class DocumentEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -17,18 +25,14 @@ data class DocumentEntity(
     val indexedAt: Long = System.currentTimeMillis(),
     val contentPreview: String = "",
     val parentDirectory: String = "",
-    val mimeType: String = "application/pdf",
+    val mimeType: String = "",
     val pageCount: Int = 0,
-    val hasEmbedding: Boolean = false
+    val isFromNetwork: Int = 0, // Agregado para coincidir con la migración
+    val networkSourceDevice: String? = null // Agregado para coincidir con la migración
 )
 
-/**
- * Tabla separada para el contenido completo de los documentos.
- * El uso de ForeignKey con CASCADE asegura que si borras un documento, 
- * su contenido se limpie automáticamente de la base de datos.
- */
 @Entity(
-    tableName = "document_contents",
+    tableName = "document_contents", // SIEMPRE PLURAL
     foreignKeys = [
         ForeignKey(
             entity = DocumentEntity::class,
@@ -36,12 +40,11 @@ data class DocumentEntity(
             childColumns = ["documentId"],
             onDelete = ForeignKey.CASCADE
         )
-    ],
-    indices = [Index(value = ["documentId"])]
+    ]
 )
 data class DocumentContentEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val documentId: Long,
-    val fullTextContent: String
+    @PrimaryKey
+    val documentId: Long, // Usamos el ID del documento como PK para evitar confusiones
+    val fullTextContent: String = "",
+    val embeddingVector: String? = null
 )
