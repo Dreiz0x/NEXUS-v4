@@ -5,8 +5,10 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "indexing_stats")
 data class IndexingStatsEntity(
-    @PrimaryKey
-    val id: String = "default",
-    val totalDocuments: Int = 0,
-    val lastUpdate: Long = System.currentTimeMillis()
+    @PrimaryKey val id: String = "default",
+    val totalFiles: Int = 0,
+    val indexedFiles: Int = 0,
+    val lastScanDurationMs: Long = 0,
+    val lastScanTimestamp: Long = 0,
+    val isCurrentlyScanning: Boolean = false
 )
