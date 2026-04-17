@@ -3,7 +3,8 @@ package com.nexus.intelligence.data.repository
 import com.nexus.intelligence.data.local.dao.DocumentDao
 import com.nexus.intelligence.data.local.entity.*
 import com.nexus.intelligence.data.parser.DocumentParser
-import com.nexus.intelligence.data.embeddings.EmbeddingService
+import com.nexus.intelligence.data.gemini.GeminiService
+import com.nexus.intelligence.data.gemini.DocumentContext
 import com.nexus.intelligence.domain.model.DocumentInfo
 import com.nexus.intelligence.domain.model.SearchResult
 import com.nexus.intelligence.domain.repository.DocumentRepository
@@ -18,7 +19,7 @@ import javax.inject.Singleton
 class DocumentRepositoryImpl @Inject constructor(
     private val documentDao: DocumentDao,
     private val documentParser: DocumentParser,
-    private val embeddingService: EmbeddingService
+    private val geminiService: GeminiService
 ) : DocumentRepository {
 
     private val _isScanning = MutableStateFlow(false)
@@ -63,6 +64,9 @@ class DocumentRepositoryImpl @Inject constructor(
         val parseResult = documentParser.parseFile(file)
         if (!parseResult.success) return@withContext null
 
+        // Obtener MIME type correcto basado en la extension
+        val mimeType = getMimeTypeFromExtension(file.extension)
+
         val entity = DocumentEntity(
             filePath = file.absolutePath,
             fileName = file.name,
@@ -72,7 +76,7 @@ class DocumentRepositoryImpl @Inject constructor(
             indexedAt = System.currentTimeMillis(),
             contentPreview = parseResult.text.take(500),
             parentDirectory = file.parent ?: "",
-            mimeType = "application/pdf",
+            mimeType = mimeType,
             pageCount = parseResult.pageCount
         )
 
@@ -115,13 +119,77 @@ class DocumentRepositoryImpl @Inject constructor(
         }
 
     override suspend fun semanticSearch(query: String): List<SearchResult> =
-        textSearch(query)
+        withContext(Dispatchers.IO) {
+            // Si Gemini no esta configurado, caer a busqueda de texto
+            if (!geminiService.isConfigured()) {
+                return@withContext textSearch(query)
+            }
+
+            try {
+                // Obtener embedding de la consulta
+                val queryEmbedding = geminiService.getEmbedding(query) ?: return@withContext textSearch(query)
+
+                // Obtener documentos de la base de datos
+                val documents = documentDao.getAllDocuments().first()
+                if (documents.isEmpty()) return@withContext emptyList()
+
+                // Calcular similaridad para cada documento
+                val scoredDocs = documents.mapNotNull { doc ->
+                    val docEmbedding = geminiService.getEmbedding(doc.contentPreview)
+                        ?: return@mapNotNull null
+                    val similarity = geminiService.cosineSimilarity(queryEmbedding, docEmbedding)
+                    Triple(doc.toDomainModel(), similarity, doc.contentPreview)
+                }.sortedByDescending { it.second }
+                    .take(20)
+
+                scoredDocs.map { (doc, score, snippet) ->
+                    SearchResult(
+                        document = doc,
+                        score = score,
+                        snippet = snippet,
+                        source = "GEMINI"
+                    )
+                }
+            } catch (e: Exception) {
+                // En caso de error, caer a busqueda de texto
+                textSearch(query)
+            }
+        }
 
     override suspend fun generateEmbeddingsForDocument(docId: Long): Boolean = true
 
-    // =========================
-    // ✅ MONITORED FOLDERS FIX
-    // =========================
+    // ═══════════════════════════════════════════════════════════════
+    // METODOS AUXILIARES
+    // ═══════════════════════════════════════════════════════════════
+
+    private fun getMimeTypeFromExtension(extension: String): String {
+        return when (extension.lowercase()) {
+            "pdf" -> "application/pdf"
+            "doc" -> "application/msword"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "xls" -> "application/vnd.ms-excel"
+            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            "ppt" -> "application/vnd.ms-powerpoint"
+            "pptx" -> "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+            "txt" -> "text/plain"
+            "md" -> "text/markdown"
+            "json" -> "application/json"
+            "xml" -> "application/xml"
+            "html", "htm" -> "text/html"
+            "csv" -> "text/csv"
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "bmp" -> "image/bmp"
+            "webp" -> "image/webp"
+            "tiff", "tif" -> "image/tiff"
+            else -> "application/octet-stream"
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MONITORED FOLDERS
+    // ═══════════════════════════════════════════════════════════════
 
     override fun getMonitoredFolders(): Flow<List<MonitoredFolderEntity>> =
         documentDao.getAllMonitoredFolders()
@@ -138,9 +206,9 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun removeMonitoredFolder(path: String) =
         documentDao.deleteMonitoredFolderByPath(path)
 
-    // =========================
+    // ═══════════════════════════════════════════════════════════════
     // HISTORIAL / STATS
-    // =========================
+    // ═══════════════════════════════════════════════════════════════
 
     override suspend fun addSearchHistory(query: String, resultCount: Int) {
         documentDao.insertSearchHistory(
@@ -160,9 +228,9 @@ class DocumentRepositoryImpl @Inject constructor(
     override suspend fun updateIndexingStats(stats: IndexingStatsEntity) =
         documentDao.updateIndexingStats(stats)
 
-    // =========================
+    // ═══════════════════════════════════════════════════════════════
     // CONTROL
-    // =========================
+    // ═══════════════════════════════════════════════════════════════
 
     override fun startScan() {
         _isScanning.value = true
@@ -173,12 +241,12 @@ class DocumentRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isApiAvailable(): Boolean =
-        embeddingService.isApiAvailable()
+        geminiService.isApiAvailable()
 }
 
-// =========================
+// ═══════════════════════════════════════════════════════════════
 // MAPPER
-// =========================
+// ═══════════════════════════════════════════════════════════════
 
 fun DocumentEntity.toDomainModel() = DocumentInfo(
     id = id,

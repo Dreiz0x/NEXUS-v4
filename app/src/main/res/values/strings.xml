@@ -1,66 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NEXUS</string>
-    <string name="app_subtitle">Personal Document Intelligence System</string>
+    <string name="app_name">ARCHIVISTA</string>
+    <string name="app_subtitle">Sistema Inteligente de Organizacion de Documentos</string>
 
     <!-- Dashboard -->
-    <string name="dashboard_title">NEXUS COMMAND CENTER</string>
-    <string name="search_hint">Search your documents with natural language…</string>
-    <string name="total_indexed">TOTAL INDEXED</string>
-    <string name="last_scan">LAST SCAN</string>
-    <string name="active_watchers">ACTIVE WATCHERS</string>
-    <string name="api_status">API STATUS</string>
-    <string name="network_nodes">NETWORK NODES</string>
-    <string name="indexing_progress">INDEXING PROGRESS</string>
+    <string name="dashboard_title">CENTRO DE COMANDO</string>
+    <string name="search_hint">Busca tus documentos con lenguaje natural...</string>
+    <string name="total_indexed">TOTAL INDEXADOS</string>
+    <string name="last_scan">ULTIMO ESCANEO</string>
+    <string name="active_watchers">OBSERVADORES ACTIVOS</string>
+    <string name="api_status">ESTADO API</string>
+    <string name="network_nodes">NODOS DE RED</string>
+    <string name="indexing_progress">PROGRESO DE INDEXADO</string>
 
     <!-- Document Types -->
     <string name="type_pdf">PDF</string>
     <string name="type_word">WORD</string>
     <string name="type_excel">EXCEL</string>
     <string name="type_powerpoint">PPTX</string>
-    <string name="type_image">IMAGE</string>
-    <string name="type_text">TEXT</string>
+    <string name="type_image">IMAGEN</string>
+    <string name="type_text">TEXTO</string>
     <string name="type_csv">CSV</string>
 
     <!-- Search -->
-    <string name="search_results">SEARCH RESULTS</string>
-    <string name="no_results">NO MATCHES FOUND IN DATABASE</string>
-    <string name="relevance_score">RELEVANCE</string>
-    <string name="open_file">OPEN FILE</string>
+    <string name="search_results">RESULTADOS DE BUSQUEDA</string>
+    <string name="no_results">SIN RESULTADOS EN LA BASE DE DATOS</string>
+    <string name="relevance_score">RELEVANCIA</string>
+    <string name="open_file">ABRIR ARCHIVO</string>
 
     <!-- File Map -->
-    <string name="file_map_title">STORAGE MAP</string>
-    <string name="internal_storage">INTERNAL STORAGE</string>
-    <string name="external_storage">EXTERNAL STORAGE</string>
+    <string name="file_map_title">MAPA DE ALMACENAMIENTO</string>
+    <string name="internal_storage">ALMACENAMIENTO INTERNO</string>
+    <string name="external_storage">ALMACENAMIENTO EXTERNO</string>
 
     <!-- Settings -->
-    <string name="settings_title">SYSTEM CONFIGURATION</string>
-    <string name="api_endpoint">API ENDPOINT</string>
+    <string name="settings_title">CONFIGURACION DEL SISTEMA</string>
+    <string name="api_endpoint">ENDPOINT API</string>
     <string name="api_endpoint_default">http://127.0.0.1:8080</string>
-    <string name="monitored_folders">MONITORED DIRECTORIES</string>
-    <string name="add_folder">ADD DIRECTORY</string>
-    <string name="remove_folder">REMOVE</string>
-    <string name="scan_now">INITIATE FULL SCAN</string>
-    <string name="clear_index">PURGE INDEX DATABASE</string>
-    <string name="network_sharing">NETWORK SHARING</string>
-    <string name="enable_server">ENABLE LOCAL SERVER</string>
-    <string name="server_port">SERVER PORT</string>
-    <string name="sound_effects">INTERFACE SOUNDS</string>
-    <string name="about">SYSTEM INFO</string>
+    <string name="monitored_folders">DIRECTORIOS MONITOREADOS</string>
+    <string name="add_folder">AGREGAR DIRECTORIO</string>
+    <string name="remove_folder">ELIMINAR</string>
+    <string name="scan_now">INICIAR ESCANEO COMPLETO</string>
+    <string name="clear_index">LIMPIAR BASE DE DATOS</string>
+    <string name="network_sharing">COMPARTIR EN RED</string>
+    <string name="enable_server">HABILITAR SERVIDOR LOCAL</string>
+    <string name="server_port">PUERTO DEL SERVIDOR</string>
+    <string name="sound_effects">EFECTOS DE SONIDO</string>
+    <string name="about">INFO DEL SISTEMA</string>
 
     <!-- Status -->
-    <string name="status_online">ONLINE</string>
-    <string name="status_offline">OFFLINE</string>
-    <string name="status_scanning">SCANNING</string>
-    <string name="status_idle">IDLE</string>
+    <string name="status_online">EN LINEA</string>
+    <string name="status_offline">FUERA DE LINEA</string>
+    <string name="status_scanning">ESCANEANDO</string>
+    <string name="status_idle">INACTIVO</string>
 
     <!-- Notifications -->
-    <string name="notification_channel_indexing">Document Indexing</string>
-    <string name="notification_indexing_title">NEXUS Indexing</string>
-    <string name="notification_indexing_text">Scanning and indexing documents…</string>
+    <string name="notification_channel_indexing">Indexacion de Documentos</string>
+    <string name="notification_indexing_title">Indexando Documentos</string>
+    <string name="notification_indexing_text">Escaneando e indexando documentos...</string>
 
     <!-- Permissions -->
-    <string name="permission_storage_title">Storage Access Required</string>
-    <string name="permission_storage_message">NEXUS needs access to your files to index and search documents. No data leaves your device.</string>
-    <string name="permission_grant">GRANT ACCESS</string>
+    <string name="permission_storage_title">Acceso a Almacenamiento Requerido</string>
+    <string name="permission_storage_message">ARCHIVISTA necesita acceso a tus archivos para indexar y buscar documentos. Ningun dato sale de tu dispositivo.</string>
+    <string name="permission_grant">CONCEDER ACCESO</string>
 </resources>

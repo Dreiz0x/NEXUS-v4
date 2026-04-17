@@ -1,8 +1,9 @@
 package com.nexus.intelligence.di
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.room.Room
-import com.nexus.intelligence.data.embeddings.EmbeddingService
+import com.nexus.intelligence.data.gemini.GeminiService
 import com.nexus.intelligence.data.local.dao.DocumentDao
 import com.nexus.intelligence.data.local.database.NexusDatabase
 import com.nexus.intelligence.data.parser.DocumentParser
@@ -41,8 +42,15 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideEmbeddingService(@ApplicationContext context: Context): EmbeddingService =
-        EmbeddingService(context)
+    fun provideSharedPreferences(@ApplicationContext context: Context): SharedPreferences =
+        context.getSharedPreferences("archivista_settings", Context.MODE_PRIVATE)
+
+    @Provides
+    @Singleton
+    fun provideGeminiService(
+        @ApplicationContext context: Context,
+        sharedPreferences: SharedPreferences
+    ): GeminiService = GeminiService(context, sharedPreferences)
 
     @Provides
     @Singleton
@@ -53,8 +61,8 @@ object AppModule {
     fun provideDocumentRepository(
         documentDao: DocumentDao,
         documentParser: DocumentParser,
-        embeddingService: EmbeddingService
-    ): DocumentRepository = DocumentRepositoryImpl(documentDao, documentParser, embeddingService)
+        geminiService: GeminiService
+    ): DocumentRepository = DocumentRepositoryImpl(documentDao, documentParser, geminiService)
 
     @Provides
     @Singleton
@@ -92,9 +100,9 @@ object AppModule {
     @Singleton
     fun provideFileOrganizerUseCase(
         repository: DocumentRepository,
-        embeddingService: EmbeddingService,
+        geminiService: GeminiService,
         documentDao: DocumentDao
-    ) = FileOrganizerUseCase(repository, embeddingService, documentDao)
+    ) = FileOrganizerUseCase(repository, geminiService, documentDao)
 
     @Provides
     @Singleton

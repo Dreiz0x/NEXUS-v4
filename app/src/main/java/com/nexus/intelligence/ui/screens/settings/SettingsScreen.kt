@@ -28,7 +28,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onBack: () -> Unit
 ) {
-    val apiEndpoint by viewModel.apiEndpoint.collectAsState()
+    val geminiApiKey by viewModel.geminiApiKey.collectAsState()
     val monitoredFolders by viewModel.monitoredFolders.collectAsState()
     val soundEnabled by viewModel.soundEnabled.collectAsState()
     val serverEnabled by viewModel.serverEnabled.collectAsState()
@@ -41,7 +41,6 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Mostrar snackbar cuando hay mensaje
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let { msg ->
             scope.launch {
@@ -69,10 +68,10 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = NexusColors.Cyan)
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = NexusColors.Cyan)
                         }
                         Text(
-                            text = "CONFIGURATION",
+                            text = "CONFIGURACION",
                             style = MaterialTheme.typography.headlineMedium,
                             color = NexusColors.Cyan,
                             letterSpacing = 2.sp
@@ -80,9 +79,9 @@ fun SettingsScreen(
                     }
                 }
 
-                // ── API Endpoint ─────────────────────────────────────
+                // ── GEMINI API KEY ─────────────────────────────────────
                 item {
-                    HudSectionHeader(title = "API ENDPOINT")
+                    HudSectionHeader(title = "GEMINI AI")
                     Spacer(modifier = Modifier.height(8.dp))
                     HolographicCard(borderColor = if (apiStatus) NexusColors.Green else NexusColors.Red) {
                         Row(
@@ -90,25 +89,31 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            StatusIndicator(isOnline = apiStatus, label = if (apiStatus) "CONNECTED" else "DISCONNECTED")
+                            StatusIndicator(isOnline = apiStatus, label = if (apiStatus) "CONECTADO" else "DESCONECTADO")
                             TextButton(onClick = { viewModel.testApiConnection() }) {
-                                Text("[TEST]", style = MaterialTheme.typography.labelMedium, color = NexusColors.Cyan)
+                                Text("[PROBAR]", style = MaterialTheme.typography.labelMedium, color = NexusColors.Cyan)
                             }
                         }
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("ENDPOINT URL:", style = MaterialTheme.typography.labelSmall, color = NexusColors.TextDim)
+                        Text("GEMINI API KEY:", style = MaterialTheme.typography.labelSmall, color = NexusColors.TextDim)
                         Spacer(modifier = Modifier.height(4.dp))
                         HudTextField(
-                            value = apiEndpoint,
-                            onValueChange = { viewModel.updateApiEndpoint(it) },
-                            placeholder = "http://127.0.0.1:8080"
+                            value = geminiApiKey,
+                            onValueChange = { viewModel.updateGeminiApiKey(it) },
+                            placeholder = "Pega tu API Key de Google AI Studio"
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            "Obtén tu API Key en aistudio.google.com",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NexusColors.TextDim
                         )
                     }
                 }
 
                 // ── Monitored Folders ────────────────────────────────
                 item {
-                    HudSectionHeader(title = "MONITORED FOLDERS")
+                    HudSectionHeader(title = "CARPETAS MONITOREADAS")
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
@@ -118,7 +123,7 @@ fun SettingsScreen(
 
                 item {
                     HolographicCard(borderColor = NexusColors.Green) {
-                        Text("ADD FOLDER TO MONITOR:", style = MaterialTheme.typography.labelSmall, color = NexusColors.Green.copy(alpha = 0.7f))
+                        Text("AGREGAR CARPETA:", style = MaterialTheme.typography.labelSmall, color = NexusColors.Green.copy(alpha = 0.7f))
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -128,11 +133,11 @@ fun SettingsScreen(
                             HudTextField(
                                 value = newFolderPath,
                                 onValueChange = { viewModel.updateNewFolderPath(it) },
-                                placeholder = "/storage/emulated/0/Documents",
+                                placeholder = "/storage/emulated/0/Documentos",
                                 modifier = Modifier.weight(1f)
                             )
                             TextButton(onClick = { viewModel.addMonitoredFolder() }) {
-                                Text("[ADD]", style = MaterialTheme.typography.labelMedium, color = NexusColors.Green)
+                                Text("[AGREGAR]", style = MaterialTheme.typography.labelMedium, color = NexusColors.Green)
                             }
                         }
                     }
@@ -140,7 +145,7 @@ fun SettingsScreen(
 
                 // ── Network Server ───────────────────────────────────
                 item {
-                    HudSectionHeader(title = "NETWORK SERVER")
+                    HudSectionHeader(title = "SERVIDOR DE RED")
                     Spacer(modifier = Modifier.height(8.dp))
                     HolographicCard(borderColor = NexusColors.Magenta) {
                         Row(
@@ -149,8 +154,8 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("LOCAL SERVER", style = MaterialTheme.typography.labelLarge, color = NexusColors.Magenta)
-                                Text("Share documents on local network", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
+                                Text("SERVIDOR LOCAL", style = MaterialTheme.typography.labelLarge, color = NexusColors.Magenta)
+                                Text("Compartir documentos en red local", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
                             }
                             Switch(
                                 checked = serverEnabled,
@@ -165,7 +170,7 @@ fun SettingsScreen(
                         }
                         if (serverEnabled) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("PORT:", style = MaterialTheme.typography.labelSmall, color = NexusColors.TextDim)
+                            Text("PUERTO:", style = MaterialTheme.typography.labelSmall, color = NexusColors.TextDim)
                             HudTextField(value = serverPort, onValueChange = { viewModel.updateServerPort(it) }, placeholder = "9090")
                         }
                     }
@@ -183,7 +188,7 @@ fun SettingsScreen(
                         ) {
                             Column {
                                 Text("AUTO-INDEX", style = MaterialTheme.typography.labelLarge, color = NexusColors.Cyan)
-                                Text("Scan monitored folders automatically", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
+                                Text("Escanear carpetas automaticamente", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
                             }
                             Switch(
                                 checked = autoIndexEnabled,
@@ -203,8 +208,8 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("SOUND EFFECTS", style = MaterialTheme.typography.labelLarge, color = NexusColors.Cyan)
-                                Text("Sci-fi interface sounds", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
+                                Text("EFECTOS DE SONIDO", style = MaterialTheme.typography.labelLarge, color = NexusColors.Cyan)
+                                Text("Sonidos de interfaz", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextDim)
                             }
                             Switch(
                                 checked = soundEnabled,
@@ -222,14 +227,14 @@ fun SettingsScreen(
 
                 // ── Danger Zone ──────────────────────────────────────
                 item {
-                    HudSectionHeader(title = "DANGER ZONE", color = NexusColors.Red)
+                    HudSectionHeader(title = "ZONA DE PELIGRO", color = NexusColors.Red)
                     Spacer(modifier = Modifier.height(8.dp))
                     HolographicCard(borderColor = NexusColors.Red) {
                         TextButton(onClick = { viewModel.clearIndex() }) {
-                            Text("[CLEAR ENTIRE INDEX]", style = MaterialTheme.typography.labelLarge, color = NexusColors.Red, fontWeight = FontWeight.Bold)
+                            Text("[LIMPIAR INDICE COMPLETO]", style = MaterialTheme.typography.labelLarge, color = NexusColors.Red, fontWeight = FontWeight.Bold)
                         }
                         Text(
-                            text = "Elimina todos los documentos indexados de la DB. Los archivos en disco no se tocan.",
+                            text = "Elimina todos los documentos indexados de la base de datos. Los archivos en disco no se tocan.",
                             style = MaterialTheme.typography.bodySmall,
                             color = NexusColors.TextDim
                         )
@@ -237,13 +242,12 @@ fun SettingsScreen(
                 }
 
                 item {
-                    HudSectionHeader(title = "ABOUT")
+                    HudSectionHeader(title = "ACERCA DE")
                     Spacer(modifier = Modifier.height(8.dp))
                     HolographicCard(borderColor = NexusColors.TextDim) {
-                        Text("NEXUS v1.1.0", style = MaterialTheme.typography.labelLarge, color = NexusColors.Cyan)
+                        Text("ARCHIVISTA v1.0.0", style = MaterialTheme.typography.labelLarge, color = NexusColors.Cyan)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Personal Document Intelligence System", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextSecondary)
-                        Text("100% Local // Zero Telemetry // Zero External Servers", style = MaterialTheme.typography.labelSmall, color = NexusColors.Green.copy(alpha = 0.5f))
+                        Text("Sistema Inteligente de Organizacion de Documentos", style = MaterialTheme.typography.bodySmall, color = NexusColors.TextSecondary)
                     }
                 }
 
@@ -275,7 +279,7 @@ private fun MonitoredFolderItem(folder: MonitoredFolderEntity, onRemove: () -> U
                 }
             }
             IconButton(onClick = onRemove) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove", tint = NexusColors.Red, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = NexusColors.Red, modifier = Modifier.size(16.dp))
             }
         }
     }

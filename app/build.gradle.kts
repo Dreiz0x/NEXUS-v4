@@ -113,4 +113,7 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-gson:$ktorVersion")
+
+    // 8. GEMINI AI SDK
+    implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
 }

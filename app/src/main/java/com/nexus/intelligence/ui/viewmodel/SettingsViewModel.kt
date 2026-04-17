@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nexus.intelligence.data.embeddings.EmbeddingService
+import com.nexus.intelligence.data.gemini.GeminiService
 import com.nexus.intelligence.data.local.entity.MonitoredFolderEntity
 import com.nexus.intelligence.domain.usecase.ManageSettingsUseCase
 import com.nexus.intelligence.service.indexing.IndexingService
@@ -20,15 +20,15 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val manageSettingsUseCase: ManageSettingsUseCase,
-    private val embeddingService: EmbeddingService,
+    private val geminiService: GeminiService,
     private val localServer: NexusLocalServer
 ) : ViewModel() {
 
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("nexus_settings", Context.MODE_PRIVATE)
+        context.getSharedPreferences("archivista_settings", Context.MODE_PRIVATE)
 
-    private val _apiEndpoint = MutableStateFlow(embeddingService.getBaseUrl())
-    val apiEndpoint: StateFlow<String> = _apiEndpoint.asStateFlow()
+    private val _geminiApiKey = MutableStateFlow(geminiService.getApiKey())
+    val geminiApiKey: StateFlow<String> = _geminiApiKey.asStateFlow()
 
     private val _monitoredFolders = MutableStateFlow<List<MonitoredFolderEntity>>(emptyList())
     val monitoredFolders: StateFlow<List<MonitoredFolderEntity>> = _monitoredFolders.asStateFlow()
@@ -63,14 +63,18 @@ class SettingsViewModel @Inject constructor(
         testApiConnection()
     }
 
-    fun updateApiEndpoint(endpoint: String) {
-        _apiEndpoint.value = endpoint
-        embeddingService.setBaseUrl(endpoint)
+    // ═══════════════════════════════════════════════════════════════
+    // GEMINI API KEY CONFIGURACIÓN
+    // ═══════════════════════════════════════════════════════════════
+
+    fun updateGeminiApiKey(apiKey: String) {
+        _geminiApiKey.value = apiKey
+        geminiService.setApiKey(apiKey)
     }
 
     fun testApiConnection() {
         viewModelScope.launch {
-            _apiStatus.value = embeddingService.isApiAvailable()
+            _apiStatus.value = geminiService.isApiAvailable()
         }
     }
 
@@ -88,7 +92,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             manageSettingsUseCase.addMonitoredFolder(path, path.substringAfterLast("/"))
             _newFolderPath.value = ""
-            _snackbarMessage.value = "Carpeta agregada ✓"
+            _snackbarMessage.value = "Carpeta agregada"
             if (_autoIndexEnabled.value) {
                 IndexingService.startScan(context, listOf(path))
             }
